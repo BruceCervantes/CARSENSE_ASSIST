@@ -50,10 +50,10 @@ $logoSVG = '<svg width="32" height="32" viewBox="0 0 40 40" fill="none">
     <div class="auth-left-glow"></div>
     <div class="auth-left-grid"></div>
     <div class="auth-left-content">
-      <div style="display:flex;align-items:center;gap:8px">
+      <a href="index.php" style="display:flex;align-items:center;gap:8px;text-decoration:none">
         <?= $logoSVG ?>
         <span class="logo-text"><span class="white">CAR</span><span class="red">SENSE</span></span>
-      </div>
+      </a>
       <div>
         <h2 style="color:#fff;font-size:1.8rem;line-height:1.2;margin-bottom:12px">
           Tu asistente automotriz<br><span style="color:var(--accent)">inteligente.</span>

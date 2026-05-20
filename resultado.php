@@ -7,10 +7,25 @@ require_once 'includes/images.php';
 require_once 'api/config/database.php';
 require_once 'api/models/DiagnosticResult.php';
 require_once 'api/models/System.php';
+require_once 'api/models/ConsultationHistory.php';
 
 $id     = trim($_GET['id'] ?? '');
 $result = $id ? DiagnosticResult::getBySlug($id) : null;
 $sys    = $result ? System::getBySlug($result['system_slug']) : null;
+
+if ($result && $sys && $user) {
+    $sessionKey = 'history_saved_' . $id;
+    if (empty($_SESSION[$sessionKey])) {
+        ConsultationHistory::create([
+            'user_id'     => (int)$user['id'],
+            'result_slug' => $id,
+            'title'       => $result['title'],
+            'system_name' => $result['system_name'],
+            'severity'    => strtolower($result['priority']),
+        ]);
+        $_SESSION[$sessionKey] = true;
+    }
+}
 
 if (!$result || !$sys) {
     $pageTitle   = 'Resultado no encontrado — CarSense';
@@ -85,13 +100,15 @@ $suggestedQs = $questionsBySystem[$result['system_slug']] ?? $defaultQuestions;
 // Context object for grog.js (must match expected shape)
 $chatCtx = [
     'result' => [
-        'title'    => $result['title'],
-        'desc'     => $result['description'],
-        'system'   => $result['system_name'],
-        'priority' => $result['priority'],
-        'tags'     => $result['tags'],
-        'zones'    => $result['zones'],
-        'when'     => $result['when'],
+        'title'     => $result['title'],
+        'desc'      => $result['description'],
+        'system'    => $result['system_name'],
+        'priority'  => $result['priority'],
+        'tags'      => $result['tags'],
+        'zones'     => $result['zones'],
+        'when'      => $result['when'],
+        'priceMin'  => $result['price_min_mxn'],
+        'priceMax'  => $result['price_max_mxn'],
     ],
     'system' => [
         'name'        => $sys['name'],

@@ -30,6 +30,10 @@ switch ($resource) {
         if (empty($body['user_id']) || empty($body['brand']) || empty($body['model']) || empty($body['year'])) {
             fail('user_id, brand, model y year son requeridos');
         }
+        $plate = trim($body['plate'] ?? '');
+        if ($plate !== '' && $plate !== '-' && Vehicle::plateExists($plate)) {
+            fail('Esta matrícula ya está registrada en el sistema');
+        }
         ok(Vehicle::create($body));
 
     case 'consultation':

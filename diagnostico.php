@@ -17,7 +17,6 @@ $priorityLabel   = ['Alta'=>'URGENCIA ALTA','Media'=>'URGENCIA MEDIA','Baja'=>'U
 
 $pageTitle   = 'Diagnóstico — CarSense';
 $currentPage = 'diagnostico';
-$breadcrumbs = [['label'=>'Diagnóstico','url'=>null]];
 require 'includes/header.php';
 ?>
 
@@ -26,12 +25,21 @@ require 'includes/header.php';
   <!-- Search bar -->
   <div class="diag-search-bar">
     <div class="diag-search-inner">
+
+      <div class="diag-search-header">
+        <div class="diag-search-icon"><?= icon('search', 17) ?></div>
+        <div>
+          <h1 class="diag-search-title">Diagnóstico <span>IA</span></h1>
+          <p class="diag-search-subtitle">Describe el síntoma con tus palabras y la IA analiza el problema</p>
+        </div>
+      </div>
+
       <div class="search-wrap" style="flex-wrap:wrap">
         <div class="search-input-group">
-          <span style="color:var(--muted2);flex-shrink:0"><?= icon('search', 15) ?></span>
+          <span class="search-input-icon"><?= icon('search', 15) ?></span>
           <input id="diag-input" class="search-input"
-                 placeholder='Describe el síntoma: "mi carro hace ruido raro al frenar"...'/>
-          <button id="clear-input" style="color:var(--muted2);background:none;border:none;cursor:pointer;display:none;flex-shrink:0">
+                 placeholder='Ej: "mi carro hace ruido raro al frenar"...'/>
+          <button id="clear-input" class="search-clear-btn" style="display:none">
             <?= icon('x', 13) ?>
           </button>
         </div>
@@ -39,11 +47,12 @@ require 'includes/header.php';
           <span id="analyze-label">Analizar <?= icon('arrowRight', 14) ?></span>
           <span id="analyze-spinner" style="display:none"><span class="spinner"></span> Analizando...</span>
         </button>
-        <button id="mobile-filter-btn" class="btn btn-ghost btn-sm" style="flex-shrink:0;position:relative">
+        <button id="mobile-filter-btn" class="btn btn-ghost btn-sm" style="position:relative">
           <?= icon('sliders', 13) ?>
           <span id="filter-badge" class="notif-badge" style="position:absolute;top:-4px;right:-4px;display:none"></span>
         </button>
       </div>
+
     </div>
   </div>
 
@@ -334,11 +343,43 @@ require 'includes/header.php';
   mobileOverlay.addEventListener('click', closeMobilePanel);
   closeMobile.addEventListener('click', closeMobilePanel);
 
+  // ── Text search helpers ──
+  var STOP_WORDS = {'al':1,'el':1,'la':1,'los':1,'las':1,'un':1,'una':1,'de':1,'del':1,'en':1,
+                    'a':1,'y':1,'o':1,'mi':1,'me':1,'se':1,'que':1,'con':1,'por':1,'para':1,
+                    'es':1,'no':1,'si':1,'su':1,'lo':1,'le':1,'hace':1,'hay':1,'mi':1,'esta':1,'este':1};
+
+  function tokenize(str){
+    return str.toLowerCase().split(/[\s,.\-\/]+/).filter(function(w){
+      return w.length > 1 && !STOP_WORDS[w];
+    });
+  }
+
+  function scoreCard(card, tokens, zones, when, sensations, tags){
+    if (!tokens.length) return 1;
+    var corpus = [
+      card.dataset.title,
+      card.dataset.desc,
+      card.dataset.system
+    ].concat(
+      tags.map(function(t){ return t.toLowerCase(); }),
+      zones.map(function(z){ return z.toLowerCase(); }),
+      when.map(function(w){ return w.toLowerCase(); }),
+      sensations.map(function(s){ return s.toLowerCase(); })
+    ).join(' ');
+
+    var matched = 0;
+    for (var i = 0; i < tokens.length; i++){
+      if (corpus.indexOf(tokens[i]) !== -1) matched++;
+    }
+    return matched / tokens.length;
+  }
+
   // ── Results filtering ──
   function updateResults(){
     var cards = resultsList.querySelectorAll('.result-card');
     var q = currentQuery.toLowerCase();
-    var visible = [];
+    var tokens = tokenize(q);
+    var scored = [];
 
     cards.forEach(function(card){
       var zones      = JSON.parse(card.dataset.zones      || '[]');
@@ -346,11 +387,7 @@ require 'includes/header.php';
       var sensations = JSON.parse(card.dataset.sensations || '[]');
       var tags       = JSON.parse(card.dataset.tags       || '[]');
 
-      var matchQ = !q ||
-        card.dataset.title.includes(q) ||
-        card.dataset.desc.includes(q)  ||
-        card.dataset.system.includes(q)||
-        tags.some(function(t){ return t.toLowerCase().includes(q); });
+      var matchQ = !q || scoreCard(card, tokens, zones, when, sensations, tags) > 0;
 
       var matchZone     = selZones.length === 0     || zones.some(function(z){ return selZones.includes(z); });
       var matchWhen     = selWhen.length === 0       || when.some(function(w){ return selWhen.includes(w); });
@@ -359,8 +396,16 @@ require 'includes/header.php';
 
       var show = matchQ && matchZone && matchWhen && matchPriority && matchSensation;
       card.style.display = show ? '' : 'none';
-      if (show) visible.push(card);
+      if (show) scored.push({ card: card, score: q ? scoreCard(card, tokens, zones, when, sensations, tags) : 1 });
     });
+
+    // Sort by relevance when there is a query
+    if (q && scored.length > 1){
+      scored.sort(function(a, b){ return b.score - a.score; });
+      scored.forEach(function(item){ resultsList.appendChild(item.card); });
+    }
+
+    var visible = scored.map(function(s){ return s.card; });
 
     emptyResults.style.display = visible.length === 0 ? 'flex' : 'none';
     // Update status text

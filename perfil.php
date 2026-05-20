@@ -53,7 +53,7 @@ require 'includes/header.php';
           <div style="color:#fff;font-size:1rem;margin-bottom:2px"><?= htmlspecialchars($user['name']) ?></div>
           <div style="color:var(--muted);font-size:12px"><?= htmlspecialchars($user['email']) ?></div>
         </div>
-        <button class="btn btn-ghost btn-xs"><?= icon('edit', 12) ?> Editar</button>
+        <button id="edit-profile-btn" class="btn btn-ghost btn-xs"><?= icon('edit', 12) ?> Editar</button>
       </div>
 
       <!-- Vehicles -->
@@ -131,7 +131,7 @@ require 'includes/header.php';
           <div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.08em">Historial de consultas</div>
           <a href="diagnostico.php" style="color:var(--accent);font-size:11px">Nueva consulta</a>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;flex-direction:column;gap:10px<?= count($rawConsultations) > 5 ? ';max-height:338px;overflow-y:auto;padding-right:4px' : '' ?>">
           <?php if (empty($rawConsultations)): ?>
             <p style="color:var(--muted2);font-size:13px">Sin consultas aún.</p>
           <?php endif; ?>
@@ -151,6 +151,68 @@ require 'includes/header.php';
             </a>
           <?php endforeach; ?>
         </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+  <!-- Edit profile modal -->
+  <div class="modal-overlay" id="edit-profile-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:36px;height:36px;background:rgba(224,48,48,0.15);border:1px solid rgba(224,48,48,0.3);border-radius:10px;display:flex;align-items:center;justify-content:center">
+            <span style="color:var(--accent)"><?= icon('user', 16) ?></span>
+          </div>
+          <div>
+            <h2 style="color:#fff;font-size:15px">Editar perfil</h2>
+            <p style="color:var(--muted2);font-size:11px">Actualiza tu información personal</p>
+          </div>
+        </div>
+        <button id="close-edit-profile" class="icon-btn" style="display:flex"><?= icon('x', 15) ?></button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-profile-form" style="display:flex;flex-direction:column;gap:14px">
+
+          <div>
+            <label class="form-label">Nombre completo *</label>
+            <input class="input-standalone" id="ep-name" value="<?= htmlspecialchars($user['name']) ?>" placeholder="Tu nombre"/>
+          </div>
+
+          <div>
+            <label class="form-label">Correo electrónico *</label>
+            <input class="input-standalone" id="ep-email" type="email" value="<?= htmlspecialchars($user['email']) ?>" placeholder="tu@correo.com"/>
+          </div>
+
+          <div style="border-top:1px solid var(--border);padding-top:14px">
+            <div style="color:var(--muted2);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px">Cambiar contraseña <span style="text-transform:none;font-weight:400">(opcional)</span></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div>
+                <label class="form-label">Contraseña actual</label>
+                <input class="input-standalone" id="ep-current-pass" type="password" placeholder="Contraseña actual"/>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div>
+                  <label class="form-label">Nueva contraseña</label>
+                  <input class="input-standalone" id="ep-new-pass" type="password" placeholder="Mín. 6 caracteres"/>
+                </div>
+                <div>
+                  <label class="form-label">Confirmar nueva</label>
+                  <input class="input-standalone" id="ep-confirm-pass" type="password" placeholder="Repite la nueva"/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="ep-error" class="error-box" style="display:none"><p></p></div>
+          <div id="ep-success" style="display:none;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:10px 14px;color:var(--green);font-size:13px"></div>
+
+          <div style="display:flex;gap:10px;margin-top:4px">
+            <button type="button" id="cancel-edit-profile" class="btn btn-ghost" style="flex:1;justify-content:center">Cancelar</button>
+            <button type="submit" id="submit-edit-profile" class="btn btn-primary" style="flex:1;justify-content:center">Guardar cambios</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -219,13 +281,83 @@ require 'includes/header.php';
       </div>
     </div>
   </div>
-</div>
 
 <script>
 (function(){
-  var userId     = <?= $userId ?>;
+  var userId       = <?= $userId ?>;
   var vehicleCount = <?= count($rawVehicles) ?>;
   var accentColors = ['#e03030','#3b82f6','#f59e0b','#10b981','#f97316','#06b6d4'];
+
+  // ── Edit profile modal ──
+  var epOverlay    = document.getElementById('edit-profile-overlay');
+  var epCloseBtn   = document.getElementById('close-edit-profile');
+  var epCancelBtn  = document.getElementById('cancel-edit-profile');
+  var epForm       = document.getElementById('edit-profile-form');
+  var epSubmitBtn  = document.getElementById('submit-edit-profile');
+  var epError      = document.getElementById('ep-error');
+  var epSuccess    = document.getElementById('ep-success');
+
+  document.getElementById('edit-profile-btn').addEventListener('click', function(){
+    epError.style.display   = 'none';
+    epSuccess.style.display = 'none';
+    document.getElementById('ep-current-pass').value  = '';
+    document.getElementById('ep-new-pass').value      = '';
+    document.getElementById('ep-confirm-pass').value  = '';
+    epOverlay.style.display = 'flex';
+  });
+
+  function closeEditProfile(){ epOverlay.style.display = 'none'; }
+  epCloseBtn.addEventListener('click',  closeEditProfile);
+  epCancelBtn.addEventListener('click', closeEditProfile);
+  epOverlay.addEventListener('click', function(e){ if (e.target === epOverlay) closeEditProfile(); });
+
+  epForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    epError.style.display   = 'none';
+    epSuccess.style.display = 'none';
+
+    var name        = document.getElementById('ep-name').value.trim();
+    var email       = document.getElementById('ep-email').value.trim();
+    var currentPass = document.getElementById('ep-current-pass').value;
+    var newPass     = document.getElementById('ep-new-pass').value;
+    var confirmPass = document.getElementById('ep-confirm-pass').value;
+
+    if (!name || !email) {
+      epError.style.display = 'block';
+      epError.querySelector('p').textContent = 'Nombre y correo son obligatorios.';
+      return;
+    }
+
+    epSubmitBtn.disabled    = true;
+    epSubmitBtn.textContent = 'Guardando...';
+
+    try {
+      var resp = await fetch('api/endpoints/update.php', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resource:         'user_profile',
+          name:             name,
+          email:            email,
+          current_password: currentPass,
+          new_password:     newPass,
+          confirm_password: confirmPass,
+        }),
+      });
+      var json = await resp.json();
+      if (!json.success) throw new Error(json.error || 'Error al guardar');
+
+      epSuccess.style.display  = 'block';
+      epSuccess.textContent    = 'Perfil actualizado correctamente. Recargando...';
+      epSubmitBtn.disabled     = true;
+      setTimeout(function(){ window.location.reload(); }, 1200);
+    } catch (err) {
+      epError.style.display = 'block';
+      epError.querySelector('p').textContent = err.message || 'Error al guardar el perfil.';
+      epSubmitBtn.disabled    = false;
+      epSubmitBtn.textContent = 'Guardar cambios';
+    }
+  });
 
   var overlay    = document.getElementById('modal-overlay');
   var addBtn     = document.getElementById('add-vehicle-btn');

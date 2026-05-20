@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
   model        VARCHAR(100) NOT NULL,
   year         VARCHAR(4)   NOT NULL DEFAULT '',
   km           VARCHAR(20)  NOT NULL DEFAULT '0',
-  plate        VARCHAR(20)  NOT NULL DEFAULT '-',
+  plate        VARCHAR(20)  NOT NULL DEFAULT '-' UNIQUE,
   color        VARCHAR(50)  NOT NULL DEFAULT 'Sin especificar',
   accent_color VARCHAR(20)  NOT NULL DEFAULT '#e03030',
   is_active    TINYINT(1)   NOT NULL DEFAULT 0,
@@ -131,15 +131,17 @@ CREATE TABLE IF NOT EXISTS component_tips (
 
 -- ── Resultados de diagnóstico ─────────────────
 CREATE TABLE IF NOT EXISTS diagnostic_results (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  numeric_id  VARCHAR(10)         NOT NULL,
-  slug        VARCHAR(100) UNIQUE NOT NULL,
-  title       VARCHAR(255)        NOT NULL,
-  description TEXT,
-  priority    ENUM('Alta','Media','Baja') NOT NULL DEFAULT 'Media',
-  system_slug VARCHAR(100),
-  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  numeric_id      VARCHAR(10)         NOT NULL,
+  slug            VARCHAR(100) UNIQUE NOT NULL,
+  title           VARCHAR(255)        NOT NULL,
+  description     TEXT,
+  priority        ENUM('Alta','Media','Baja') NOT NULL DEFAULT 'Media',
+  system_slug     VARCHAR(100),
+  price_min_mxn   INT NULL,
+  price_max_mxn   INT NULL,
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (system_slug) REFERENCES systems(slug) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 

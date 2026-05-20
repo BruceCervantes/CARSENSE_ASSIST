@@ -73,13 +73,13 @@ $logoSVG = '<svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="h
     </div>
   </header>
 
-  <div id="breadcrumbs-bar" class="<?= empty($breadcrumbs) ? 'hidden' : '' ?>">
+  <div id="breadcrumbs-bar" class="breadcrumbs-bar<?= empty($breadcrumbs) ? ' hidden' : '' ?>">
     <?php
     $last = count($breadcrumbs) - 1;
     foreach ($breadcrumbs as $i => $crumb):
     ?>
       <?php if ($i > 0): ?>
-        <span class="breadcrumb-sep"><?= icon('chevronRight', 10) ?></span>
+        <span class="breadcrumb-sep">/</span>
       <?php endif; ?>
       <?php if ($crumb['url'] !== null && $i < $last): ?>
         <a href="<?= htmlspecialchars($crumb['url']) ?>"><?= htmlspecialchars($crumb['label']) ?></a>

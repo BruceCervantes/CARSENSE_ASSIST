@@ -26,6 +26,7 @@ class DiagnosticResult {
         $db = Database::getInstance();
         $stmt = $db->query(
             'SELECT dr.numeric_id, dr.slug, dr.title, dr.description, dr.priority,
+                    dr.price_min_mxn, dr.price_max_mxn,
                     s.slug AS system_slug, s.name AS system_name
              FROM diagnostic_results dr
              LEFT JOIN systems s ON s.slug = dr.system_slug
@@ -42,6 +43,7 @@ class DiagnosticResult {
         $db = Database::getInstance();
         $stmt = $db->prepare(
             'SELECT dr.numeric_id, dr.slug, dr.title, dr.description, dr.priority,
+                    dr.price_min_mxn, dr.price_max_mxn,
                     s.slug AS system_slug, s.name AS system_name
              FROM diagnostic_results dr
              LEFT JOIN systems s ON s.slug = dr.system_slug

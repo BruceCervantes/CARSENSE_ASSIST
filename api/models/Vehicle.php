@@ -32,6 +32,17 @@ class Vehicle {
         return self::findById($id);
     }
 
+    public static function plateExists(string $plate, ?int $excludeId = null): bool {
+        if ($plate === '' || $plate === '-') return false;
+        $db   = Database::getInstance();
+        $sql  = 'SELECT id FROM vehicles WHERE UPPER(REPLACE(plate, \' \', \'\')) = UPPER(REPLACE(?, \' \', \'\'))';
+        $args = [$plate];
+        if ($excludeId !== null) { $sql .= ' AND id != ?'; $args[] = $excludeId; }
+        $stmt = $db->prepare($sql);
+        $stmt->execute($args);
+        return (bool) $stmt->fetch();
+    }
+
     public static function setActive(int $userId, int $vehicleId): bool {
         $db = Database::getInstance();
         $db->prepare('UPDATE vehicles SET is_active = 0 WHERE user_id = ?')->execute([$userId]);

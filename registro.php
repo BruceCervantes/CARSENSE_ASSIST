@@ -83,10 +83,10 @@ $vehicleBrands = ['Toyota','Honda','Nissan','Chevrolet','Ford','Volkswagen','Hyu
     <div class="auth-left-glow" style="background:radial-gradient(circle at 30% 50%, rgba(224,48,48,0.16) 0%, transparent 65%)"></div>
     <div class="auth-left-grid"></div>
     <div class="auth-left-content">
-      <div style="display:flex;align-items:center;gap:8px">
+      <a href="index.php" style="display:flex;align-items:center;gap:8px;text-decoration:none">
         <?= $logoSVG ?>
         <span class="logo-text"><span class="white">CAR</span><span class="red">SENSE</span></span>
-      </div>
+      </a>
       <div>
         <h2 style="color:#fff;font-size:1.8rem;line-height:1.2;margin-bottom:12px">
           Empieza a conocer<br><span style="color:var(--accent)">tu vehículo.</span>
@@ -122,10 +122,10 @@ $vehicleBrands = ['Toyota','Honda','Nissan','Chevrolet','Ford','Volkswagen','Hyu
 
   <!-- Right form -->
   <div class="auth-right">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:40px" id="mobile-logo">
+    <a href="index.php" style="display:flex;align-items:center;gap:8px;margin-bottom:40px;text-decoration:none" id="mobile-logo">
       <?= $logoSVG ?>
       <span class="logo-text"><span class="white">CAR</span><span class="red">SENSE</span></span>
-    </div>
+    </a>
     <div class="auth-form-container">
       <!-- Step progress bars -->
       <div style="display:flex;gap:8px;margin-bottom:20px">
